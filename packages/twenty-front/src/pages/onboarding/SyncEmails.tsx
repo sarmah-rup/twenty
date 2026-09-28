@@ -5,13 +5,22 @@ import { isGoogleMessagingEnabledState } from '@/client-config/states/isGoogleMe
 import { isMicrosoftCalendarEnabledState } from '@/client-config/states/isMicrosoftCalendarEnabledState';
 import { isMicrosoftMessagingEnabledState } from '@/client-config/states/isMicrosoftMessagingEnabledState';
 import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
+import { OnboardingSkipDialog } from '@/onboarding/components/OnboardingSkipDialog';
+import { OnboardingSkipDialogAvatars } from '@/onboarding/components/OnboardingSkipDialogAvatars';
+import { ONBOARDING_NETWORK_PREVIEW_PEOPLE } from '@/onboarding/constants/OnboardingNetworkPreviewPeople';
+import { ONBOARDING_SKIP_DIALOG_IDS } from '@/onboarding/constants/OnboardingSkipDialogIds';
 import { SyncEmailsAutoSkipEffect } from '@/onboarding/effect-components/SyncEmailsAutoSkipEffect';
+import { useOnboardingStepEnterHotkey } from '@/onboarding/hooks/useOnboardingStepEnterHotkey';
 import { useSetOnboardingStepFreeCredits } from '@/onboarding/hooks/useSetOnboardingStepFreeCredits';
 import { useSkipSyncEmailOnboardingStep } from '@/onboarding/hooks/useSkipSyncEmailOnboardingStep';
 import { useTriggerApisOAuth } from '@/settings/accounts/hooks/useTriggerApiOAuth';
+import { PageFocusId } from '@/types/PageFocusId';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { useLingui } from '@lingui/react/macro';
 import { useCallback, useState } from 'react';
 import { AppPath, ConnectedAccountProvider } from 'twenty-shared/types';
+import { IconGoogle, IconMicrosoft } from 'twenty-ui/icon';
 import { ImportContacts } from '~/pages/onboarding/ImportContacts';
 import {
   CalendarChannelVisibility,
@@ -19,6 +28,14 @@ import {
 } from '~/generated/graphql';
 
 export const SyncEmails = () => {
+  const { t } = useLingui();
+  const { openDialog } = useDialog();
+  const onboardingConfig = useAtomStateValue(onboardingConfigState);
+  const currentUser = useAtomStateValue(currentUserState);
+  const importContactsCreditsReward =
+    currentUser?.isWorkspaceCreator === true
+      ? (onboardingConfig?.importContactsCreditsReward ?? 0)
+      : 0;
   const { triggerApisOAuth } = useTriggerApisOAuth();
   const skipSyncEmailOnboardingStep = useSkipSyncEmailOnboardingStep();
   const setOnboardingStepFreeCredits = useSetOnboardingStepFreeCredits();
@@ -46,15 +63,9 @@ export const SyncEmails = () => {
   const isClientConfigLoaded = useAtomStateValue(
     clientConfigApiStatusState,
   ).isLoadedOnce;
-  const onboardingConfig = useAtomStateValue(onboardingConfigState);
-  const currentUser = useAtomStateValue(currentUserState);
-
-  const creditsReward = currentUser?.isWorkspaceCreator
-    ? onboardingConfig?.importContactsCreditsReward
-    : undefined;
 
   const connectWithProvider = async (provider: ConnectedAccountProvider) => {
-    setOnboardingStepFreeCredits('importContacts', creditsReward ?? 0);
+    setOnboardingStepFreeCredits('importContacts', importContactsCreditsReward);
 
     try {
       await triggerApisOAuth(provider, {
@@ -70,11 +81,18 @@ export const SyncEmails = () => {
     }
   };
 
-  const handleSkip = async () => {
+  const handleSkip = () => openDialog(ONBOARDING_SKIP_DIALOG_IDS.syncEmails);
+
+  const handleSkipConfirm = async () => {
     await skipSyncEmailOnboardingStep({ isAutoSkipped: false });
 
     setOnboardingStepFreeCredits('importContacts', 0);
   };
+
+  useOnboardingStepEnterHotkey({
+    focusId: PageFocusId.SyncEmail,
+    onEnter: handleSkip,
+  });
 
   const handleAutoSkipError = useCallback(() => {
     setHasAutoSkipFailed(true);
@@ -89,19 +107,60 @@ export const SyncEmails = () => {
   }
 
   return (
-    <ImportContacts
-      creditsReward={creditsReward}
-      onContinueWithGoogle={
-        isGoogleProviderEnabled
-          ? () => connectWithProvider(ConnectedAccountProvider.GOOGLE)
-          : undefined
-      }
-      onContinueWithMicrosoft={
-        isMicrosoftProviderEnabled
-          ? () => connectWithProvider(ConnectedAccountProvider.MICROSOFT)
-          : undefined
-      }
-      onSkip={handleSkip}
-    />
+    <>
+      <ImportContacts
+        onContinueWithGoogle={
+          isGoogleProviderEnabled
+            ? () => connectWithProvider(ConnectedAccountProvider.GOOGLE)
+            : undefined
+        }
+        onContinueWithMicrosoft={
+          isMicrosoftProviderEnabled
+            ? () => connectWithProvider(ConnectedAccountProvider.MICROSOFT)
+            : undefined
+        }
+        onSkip={handleSkip}
+        rewardCredits={importContactsCreditsReward}
+      />
+      <OnboardingSkipDialog
+        dialogId={ONBOARDING_SKIP_DIALOG_IDS.syncEmails}
+        visual={
+          <OnboardingSkipDialogAvatars
+            avatars={ONBOARDING_NETWORK_PREVIEW_PEOPLE.map((person) => ({
+              id: person.id,
+              name: '',
+              src: person.avatarUrl,
+              shape: 'circle',
+            }))}
+          />
+        }
+        title={t`Start with your whole network`}
+        description={t`Twenty adds the people you email and meet, and keeps them up to date without manual data entry.`}
+        actions={[
+          ...(isMicrosoftProviderEnabled
+            ? [
+                {
+                  label: t`Continue with Microsoft`,
+                  Icon: IconMicrosoft,
+                  onClick: () =>
+                    connectWithProvider(ConnectedAccountProvider.MICROSOFT),
+                },
+              ]
+            : []),
+          ...(isGoogleProviderEnabled
+            ? [
+                {
+                  label: t`Continue with Google`,
+                  Icon: IconGoogle,
+                  onClick: () =>
+                    connectWithProvider(ConnectedAccountProvider.GOOGLE),
+                },
+              ]
+            : []),
+        ]}
+        rewardCredits={importContactsCreditsReward}
+        onSkip={() => void handleSkipConfirm()}
+      />
+    </>
   );
 };
