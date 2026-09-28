@@ -77,6 +77,15 @@ export const getOnboardingCreditsProgress = ({
 
   return {
     earnedCredits: getOnboardingEarnedCredits(onboardingFreeCredits),
+    earnedCreditsByStep: ONBOARDING_CREDITS_STEPS.filter(
+      (step) =>
+        onboardingFreeCredits[step] > 0 ||
+        (isStepDone(step) && rewardCreditsByStep[step] > 0),
+    ).map((step) => ({
+      step,
+      credits: onboardingFreeCredits[step],
+      rewardCredits: rewardCreditsByStep[step],
+    })),
     goalCredits,
     currentStep:
       isDefined(onboardingStep) && currentStepCredits > 0
