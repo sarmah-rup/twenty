@@ -62,7 +62,7 @@ export const DropdownOptionItem = ({
         onSelect?.();
 
         if (closeOnSelect ?? !multiple) {
-          closeTree(event.nativeEvent);
+          closeTree();
         }
       }}
       render={(renderProps) => (

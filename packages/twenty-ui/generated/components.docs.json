@@ -6782,8 +6782,22 @@
             "description": ""
           },
           {
+            "name": "onEscapeKeyDown",
+            "type": "((event: DropdownDismissEvent) => void)",
+            "required": false,
+            "defaultValue": null,
+            "description": ""
+          },
+          {
+            "name": "onInteractOutside",
+            "type": "((event: DropdownDismissEvent) => void)",
+            "required": false,
+            "defaultValue": null,
+            "description": ""
+          },
+          {
             "name": "onOpenChange",
-            "type": "((open: boolean, eventDetails: DropdownOpenChangeDetails) => void)",
+            "type": "((open: boolean) => void)",
             "required": false,
             "defaultValue": null,
             "description": ""
@@ -7461,7 +7475,7 @@
           },
           {
             "name": "onOpenChange",
-            "type": "((open: boolean, eventDetails: DropdownOpenChangeDetails) => void)",
+            "type": "((open: boolean) => void)",
             "required": false,
             "defaultValue": null,
             "description": ""
