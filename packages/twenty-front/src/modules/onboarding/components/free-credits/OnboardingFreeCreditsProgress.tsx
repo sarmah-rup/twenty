@@ -5,8 +5,10 @@ import { StyledOnboardingFreeCreditsText } from '@/onboarding/components/free-cr
 import { styled } from '@linaria/react';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
+import { VisibilityHidden } from 'twenty-ui/primitives/accessibility';
 import { ProgressBar } from 'twenty-ui/primitives/feedback';
 import { themeCssVariables } from 'twenty-ui/theme';
+import { useIsMobile } from 'twenty-ui/utilities';
 
 const StyledProgressBar = styled(ProgressBar)`
   flex-shrink: 0;
@@ -32,8 +34,13 @@ export const OnboardingFreeCreditsProgress = ({
   onTrackGrown,
 }: OnboardingFreeCreditsProgressProps) => {
   const { t } = useLingui();
+  const isMobile = useIsMobile();
 
   const displayedCredits = hasTrackGrown ? earnedCredits : seenCredits;
+  const goalCreditsLabel = plural(goalCredits, {
+    one: 'free credit',
+    other: 'free credits',
+  });
 
   return (
     <>
@@ -55,12 +62,13 @@ export const OnboardingFreeCreditsProgress = ({
           /
           <OnboardingFreeCreditsAnimatedCount credits={goalCredits} />
         </StyledOnboardingFreeCreditsCount>
-        <StyledOnboardingFreeCreditsLabel>
-          {plural(goalCredits, {
-            one: 'free credit',
-            other: 'free credits',
-          })}
-        </StyledOnboardingFreeCreditsLabel>
+        {isMobile ? (
+          <VisibilityHidden>{goalCreditsLabel}</VisibilityHidden>
+        ) : (
+          <StyledOnboardingFreeCreditsLabel>
+            {goalCreditsLabel}
+          </StyledOnboardingFreeCreditsLabel>
+        )}
       </StyledOnboardingFreeCreditsText>
     </>
   );
