@@ -5,11 +5,14 @@ import { getOnboardingCreditsRewardAriaLabel } from '@/onboarding/utils/getOnboa
 import { type Ref } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 import { MainButton } from 'twenty-ui/components';
+import { Loader } from 'twenty-ui/primitives/feedback';
 import { useTheme } from 'twenty-ui/theme';
 
 type OnboardingRewardMainButtonProps = OnboardingRewardAction & {
   creditsReward: number;
   isRewardPerItem?: boolean;
+  disabled?: boolean;
+  isLoading?: boolean;
   ref?: Ref<HTMLButtonElement>;
 };
 
@@ -18,6 +21,8 @@ export const OnboardingRewardMainButton = ({
   Icon,
   creditsReward,
   isRewardPerItem = false,
+  disabled = false,
+  isLoading = false,
   onClick,
   ref,
 }: OnboardingRewardMainButtonProps) => {
@@ -25,14 +30,21 @@ export const OnboardingRewardMainButton = ({
   const { formatNumber } = useNumberFormat();
   const formattedCreditsReward = formatNumber(creditsReward, { decimals: 2 });
 
+  const getStartIcon = () => {
+    if (isLoading) {
+      return <Loader />;
+    }
+
+    return isDefined(Icon) ? <Icon size={theme.icon.size.md} /> : undefined;
+  };
+
   return (
     <MainButton
       ref={ref}
       fullWidth
+      disabled={disabled}
       onClick={onClick}
-      startIcon={
-        isDefined(Icon) ? <Icon size={theme.icon.size.md} /> : undefined
-      }
+      startIcon={getStartIcon()}
       endIcon={
         creditsReward > 0 ? (
           <OnboardingCreditsRewardChip
