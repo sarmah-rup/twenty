@@ -17,6 +17,12 @@ describe('normalizeUrl', () => {
     );
   });
 
+  it('should not add a second scheme to a mixed-case scheme', () => {
+    expect(normalizeUrl('Https://Example.com/Path')).toBe(
+      'https://example.com/Path',
+    );
+  });
+
   it('should remove trailing slash', () => {
     expect(normalizeUrl('https://example.com/')).toBe('https://example.com');
   });

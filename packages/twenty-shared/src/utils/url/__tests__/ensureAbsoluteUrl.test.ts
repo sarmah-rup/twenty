@@ -21,6 +21,16 @@ describe('ensureAbsoluteUrl', () => {
     expect(ensureAbsoluteUrl('HTTP://example.com')).toBe('HTTP://example.com');
   });
 
+  it('should return mixed-case scheme URLs as-is', () => {
+    expect(ensureAbsoluteUrl('Https://example.com')).toBe(
+      'Https://example.com',
+    );
+    expect(ensureAbsoluteUrl('Http://example.com')).toBe('Http://example.com');
+    expect(ensureAbsoluteUrl('hTtPs://example.com')).toBe(
+      'hTtPs://example.com',
+    );
+  });
+
   it('should prepend https:// to bare domains', () => {
     expect(ensureAbsoluteUrl('example.com')).toBe('https://example.com');
   });
